@@ -16,7 +16,7 @@ require 'fake_braintree/valid_credit_cards'
 require 'fake_braintree/version'
 
 module FakeBraintree
-  mattr_accessor :registry, :verify_all_cards, :decline_all_cards
+  mattr_accessor :registry, :verify_all_cards, :decline_all_cards, :make_all_subscriptions_past_due
 
   def self.activate!
     initialize_registry
@@ -33,6 +33,7 @@ module FakeBraintree
   def self.clear!
     self.registry.clear!
     self.decline_all_cards = false
+    self.make_all_subscriptions_past_due = false
     clear_log!
   end
 
@@ -76,12 +77,28 @@ module FakeBraintree
     }
   end
 
+  def self.create_past_due_failure
+    {
+      'message' => 'Subscription status must be Past Due in order to retry.',
+      'errors' => { 'errors' => [] },
+      'params' => {}
+    }
+  end
+
   def self.decline_all_cards!
     self.decline_all_cards = true
   end
 
   def self.decline_all_cards?
     decline_all_cards
+  end
+
+  def self.make_all_subscriptions_past_due!
+    self.make_all_subscriptions_past_due = true
+  end
+
+  def self.make_all_subscriptions_past_due?
+    make_all_subscriptions_past_due
   end
 
   def self.verify_all_cards!

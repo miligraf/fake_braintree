@@ -124,6 +124,9 @@ module FakeBraintree
     post '/merchants/:merchant_id/transactions' do
       if FakeBraintree.decline_all_cards?
         gzipped_response(422, FakeBraintree.create_failure.to_xml(root: 'api_error_response'))
+      elsif FakeBraintree.make_all_subscriptions_past_due?
+        #<Braintree::ErrorResult params:{...} errors:<transaction:[(91531) Subscription status must be Past Due in order to retry.]>>
+        gzipped_response(422, FakeBraintree.create_past_due_failure.to_xml(root: 'api_error_response'))
       else
         transaction = hash_from_request_body_with_key('transaction')
         transaction_id = md5("#{params[:merchant_id]}#{Time.now.to_f}")
@@ -166,6 +169,25 @@ module FakeBraintree
                               'status' => Braintree::Transaction::Status::Voided}
       FakeBraintree.registry.transactions[transaction['id']] = transaction_response
       gzipped_response(200, transaction_response.to_xml(root: 'transaction'))
+    end
+
+    # Braintree::Transaction.submit_for_settlement
+    put '/merchants/:merchant_id/transactions/:transaction_id/submit_for_settlement' do
+      transaction = FakeBraintree.registry.transactions[params[:transaction_id]]
+      if transaction
+        transaction_response = {'id' => transaction['id'],
+                                'type' => transaction['sale'],
+                                'amount' => transaction['amount'],
+                                'status' => Braintree::Transaction::Status::SubmittedForSettlement}
+        FakeBraintree.registry.transactions[transaction['id']] = transaction_response
+        gzipped_response(200, transaction_response.to_xml(root: 'transaction'))
+      else
+        gzipped_response(404, {})
+      end
+    end
+
+    put "/users/1" do
+      puts "*** llegue"
     end
 
     # Braintree::TransparentRedirect.url
