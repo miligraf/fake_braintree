@@ -125,7 +125,6 @@ module FakeBraintree
       if FakeBraintree.decline_all_cards?
         gzipped_response(422, FakeBraintree.create_failure.to_xml(root: 'api_error_response'))
       elsif FakeBraintree.make_all_subscriptions_past_due?
-        #<Braintree::ErrorResult params:{...} errors:<transaction:[(91531) Subscription status must be Past Due in order to retry.]>>
         gzipped_response(422, FakeBraintree.create_past_due_failure.to_xml(root: 'api_error_response'))
       else
         transaction = hash_from_request_body_with_key('transaction')
@@ -184,10 +183,6 @@ module FakeBraintree
       else
         gzipped_response(404, {})
       end
-    end
-
-    put "/users/1" do
-      puts "*** llegue"
     end
 
     # Braintree::TransparentRedirect.url
